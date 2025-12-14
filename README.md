@@ -55,6 +55,8 @@
   ├─ TABLE sf_accounts
   ├─ TABLE sf_opportunities
   └─ TABLE sf_contacts
+
+OWNERは全て: AGENTIC_ANALYTICS_VHOL_ROLE
 ```
 
 ## ロールに付与した権限関係
@@ -90,13 +92,3 @@
              オブジェクトごとに別途権限が必要）
 ``` 
 
-
-
-
-
-
-
-
-
-OWNERは全て: AGENTIC_ANALYTICS_VHOL_ROLE
-```
