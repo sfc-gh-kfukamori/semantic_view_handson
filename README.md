@@ -1,5 +1,8 @@
 # semantic_view_hands_on
 
+Snowflake Quickstart
+https://www.snowflake.com/en/developers/guides/snowflake-semantic-view-agentic-analytics/
+
 ## setup.sqlの実行
 
 ## setup.sqlで生成されるオブジェクト
