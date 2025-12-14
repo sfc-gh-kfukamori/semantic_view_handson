@@ -92,6 +92,12 @@ OWNERは全て: AGENTIC_ANALYTICS_VHOL_ROLE
              オブジェクトごとに別途権限が必要）
 ``` 
 
+## ER図
+
+- ディメンション系テーブル：末尾にDIM  
+- ファクト系テーブル：SALES_FACT, FINANCE_TRANSACTIONS, MARKETING_CAMPAIGN_FACT, HR_EMPLOYEE_FACT  
+- SFDC系テーブル：SF_ACCOUNTS, SF_OPPORTUNITIES, SF_CONTACTS  
+
 ``` mermaid
 erDiagram
   PRODUCT_CATEGORY_DIM {
