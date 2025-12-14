@@ -6,9 +6,9 @@ https://www.snowflake.com/en/developers/guides/snowflake-semantic-view-agentic-a
 ## Contents
 
 # 目次
-1. [概要](#anchor1)
-1. [順序](#anchor2)
-1. [詳細](#anchor3)
+-  [概要](#anchor1)
+-  [順序](#anchor2)
+-  [詳細](#anchor3)
 
 <a id="anchor1"></a>
 
