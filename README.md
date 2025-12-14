@@ -7,7 +7,7 @@ https://www.snowflake.com/en/developers/guides/snowflake-semantic-view-agentic-a
 
 # 目次
 # 目次
-- [セットアップ](#メインセクション1)
+- [m](#メインセクション1)
 - [メインセクション2](#メインセクション2)
 - [メインセクション3](#メインセクション3)
 
