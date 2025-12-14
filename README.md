@@ -7,12 +7,12 @@ https://www.snowflake.com/en/developers/guides/snowflake-semantic-view-agentic-a
 
 # 目次
 # 目次
-- [m](#メインセクション1)
+- [セットアップ](##セットアップ)
 - [メインセクション2](#メインセクション2)
 - [メインセクション3](#メインセクション3)
 
 
-## setup.sqlの実行
+## セットアップ
 
 ## setup.sqlで生成されるオブジェクト
 
