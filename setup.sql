@@ -523,3 +523,26 @@ use role agentic_analytics_vhol_role;
 
     -- Show all tables
     SHOW TABLES IN SCHEMA VHOL_SCHEMA; 
+
+
+    /////作成したデータの確認
+    -- select * from sv_vhol_db.vhol_schema.CHANNEL_DIM; 
+    -- select * from sv_vhol_db.vhol_schema.CUSTOMER_DIM; 
+    -- select * from sv_vhol_db.vhol_schema.DEPARTMENT_DIM; 
+    -- select * from sv_vhol_db.vhol_schema.EMPLOYEE_DIM;
+    -- select * from sv_vhol_db.vhol_schema.FINANCE_TRANSACTIONS; 
+    -- select * from sv_vhol_db.vhol_schema.HR_EMPLOYEE_FACT;
+    -- select * from sv_vhol_db.vhol_schema.JOB_DIM;
+    -- select * from sv_vhol_db.vhol_schema.LOCATION_DIM;
+    -- select * from sv_vhol_db.vhol_schema.MARKETING_CAMPAIGN_FACT;
+    -- select * from sv_vhol_db.vhol_schema.PRODUCT_CATEGORY_DIM;
+    -- select * from sv_vhol_db.vhol_schema.PRODUCT_DIM;
+    -- select * from sv_vhol_db.vhol_schema.REGION_DIM;
+    -- select * from sv_vhol_db.vhol_schema.SALES_FACT;
+    -- select * from sv_vhol_db.vhol_schema.SALES_REP_DIM;
+    -- select * from sv_vhol_db.vhol_schema.SF_ACCOUNTS;
+    -- select * from sv_vhol_db.vhol_schema.SF_CONTACTS;
+    -- select * from sv_vhol_db.vhol_schema.SF_OPPORTUNITIES;
+    -- select * from sv_vhol_db.vhol_schema.VENDOR_DIM;
+    
+    
