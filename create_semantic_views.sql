@@ -1,211 +1,498 @@
--- Creates business unit-specific semantic views for natural language queries
-
--- Set role, database and schema
 USE ROLE agentic_analytics_vhol_role;
 USE DATABASE SV_VHOL_DB;
 USE SCHEMA VHOL_SCHEMA;
 
--- FINANCE SEMANTIC VIEW
-create or replace semantic view FINANCE_SEMANTIC_VIEW
-    tables (
-        TRANSACTIONS as FINANCE_TRANSACTIONS primary key (TRANSACTION_ID) with synonyms=('finance transactions','financial data') comment='All financial transactions across departments',
-        ACCOUNTS as ACCOUNT_DIM primary key (ACCOUNT_KEY) with synonyms=('chart of accounts','account types') comment='Account dimension for financial categorization',
-        DEPARTMENTS as DEPARTMENT_DIM primary key (DEPARTMENT_KEY) with synonyms=('business units','departments') comment='Department dimension for cost center analysis',
-        VENDORS as VENDOR_DIM primary key (VENDOR_KEY) with synonyms=('suppliers','vendors') comment='Vendor information for spend analysis',
-        PRODUCTS as PRODUCT_DIM primary key (PRODUCT_KEY) with synonyms=('products','items') comment='Product dimension for transaction analysis',
-        CUSTOMERS as CUSTOMER_DIM primary key (CUSTOMER_KEY) with synonyms=('clients','customers') comment='Customer dimension for revenue analysis'
-    )
-    relationships (
-        TRANSACTIONS_TO_ACCOUNTS as TRANSACTIONS(ACCOUNT_KEY) references ACCOUNTS(ACCOUNT_KEY),
-        TRANSACTIONS_TO_DEPARTMENTS as TRANSACTIONS(DEPARTMENT_KEY) references DEPARTMENTS(DEPARTMENT_KEY),
-        TRANSACTIONS_TO_VENDORS as TRANSACTIONS(VENDOR_KEY) references VENDORS(VENDOR_KEY),
-        TRANSACTIONS_TO_PRODUCTS as TRANSACTIONS(PRODUCT_KEY) references PRODUCTS(PRODUCT_KEY),
-        TRANSACTIONS_TO_CUSTOMERS as TRANSACTIONS(CUSTOMER_KEY) references CUSTOMERS(CUSTOMER_KEY)
-    )
-    facts (
-        TRANSACTIONS.TRANSACTION_AMOUNT as amount comment='Transaction amount in dollars',
-        TRANSACTIONS.TRANSACTION_RECORD as 1 comment='Count of transactions'
-    )
-    dimensions (
-        TRANSACTIONS.TRANSACTION_DATE as date with synonyms=('date','transaction date') comment='Date of the financial transaction',
-        TRANSACTIONS.TRANSACTION_MONTH as MONTH(date) comment='Month of the transaction',
-        TRANSACTIONS.TRANSACTION_YEAR as YEAR(date) comment='Year of the transaction',
-        ACCOUNTS.ACCOUNT_NAME as account_name with synonyms=('account','account type') comment='Name of the account',
-        ACCOUNTS.ACCOUNT_TYPE as account_type with synonyms=('type','category') comment='Type of account (Income/Expense)',
-        DEPARTMENTS.DEPARTMENT_NAME as department_name with synonyms=('department','business unit') comment='Name of the department',
-        VENDORS.VENDOR_NAME as vendor_name with synonyms=('vendor','supplier') comment='Name of the vendor',
-        PRODUCTS.PRODUCT_NAME as product_name with synonyms=('product','item') comment='Name of the product',
-        CUSTOMERS.CUSTOMER_NAME as customer_name with synonyms=('customer','client') comment='Name of the customer',
-        TRANSACTIONS.APPROVAL_STATUS as approval_status with synonyms=('approval','status','approval state') comment='Transaction approval status (Approved/Pending/Rejected)',
-        TRANSACTIONS.PROCUREMENT_METHOD as procurement_method with synonyms=('procurement','method','purchase method') comment='Method of procurement (RFP/Quotes/Emergency/Contract)',
-        TRANSACTIONS.APPROVER_ID as approver_id with synonyms=('approver','approver employee id') comment='Employee ID of the approver from HR',
-        TRANSACTIONS.APPROVAL_DATE as approval_date with synonyms=('approved date','date approved') comment='Date when transaction was approved',
-        TRANSACTIONS.PURCHASE_ORDER_NUMBER as purchase_order_number with synonyms=('PO number','PO','purchase order') comment='Purchase order number for tracking',
-        TRANSACTIONS.CONTRACT_REFERENCE as contract_reference with synonyms=('contract','contract number','contract ref') comment='Reference to related contract'
-    )
-    metrics (
-        TRANSACTIONS.AVERAGE_AMOUNT as AVG(transactions.amount) comment='Average transaction amount',
-        TRANSACTIONS.TOTAL_AMOUNT as SUM(transactions.amount) comment='Total transaction amount',
-        TRANSACTIONS.TOTAL_TRANSACTIONS as COUNT(transactions.transaction_record) comment='Total number of transactions'
-    )
-    comment='Semantic view for financial analysis and reporting';
+-----------------------------
+-- FINANCE SEMANTIC VIEW（日⽂）
+-----------------------------
+CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
+    TABLES (
+        TRANSACTIONS AS FINANCE_TRANSACTIONS PRIMARY KEY (TRANSACTION_ID)
+            WITH SYNONYMS = ('財務トランザクション','財務データ')
+            COMMENT = '部門横断のすべての財務トランザクション',
 
+        ACCOUNTS AS ACCOUNT_DIM PRIMARY KEY (ACCOUNT_KEY)
+            WITH SYNONYMS = ('勘定科目','アカウント種別')
+            COMMENT = '財務カテゴリ用の勘定科目ディメンション',
 
--- SALES SEMANTIC VIEW
-create or replace semantic view SALES_SEMANTIC_VIEW
-  tables (
-    CUSTOMERS as CUSTOMER_DIM primary key (CUSTOMER_KEY) with synonyms=('clients','customers','accounts') comment='Customer information for sales analysis',
-    PRODUCTS as PRODUCT_DIM primary key (PRODUCT_KEY) with synonyms=('products','items','SKUs') comment='Product catalog for sales analysis',
-    PRODUCT_CATEGORY_DIM primary key (CATEGORY_KEY),
-    REGIONS as REGION_DIM primary key (REGION_KEY) with synonyms=('territories','regions','areas') comment='Regional information for territory analysis',
-    SALES as SALES_FACT primary key (SALE_ID) with synonyms=('sales transactions','sales data') comment='All sales transactions and deals',
-    SALES_REPS as SALES_REP_DIM primary key (SALES_REP_KEY) with synonyms=('sales representatives','reps','salespeople') comment='Sales representative information',
-    VENDORS as VENDOR_DIM primary key (VENDOR_KEY) with synonyms=('suppliers','vendors') comment='Vendor information for supply chain analysis'
-  )
-  relationships (
-    PRODUCT_TO_CATEGORY as PRODUCTS(CATEGORY_KEY) references PRODUCT_CATEGORY_DIM(CATEGORY_KEY),
-    SALES_TO_CUSTOMERS as SALES(CUSTOMER_KEY) references CUSTOMERS(CUSTOMER_KEY),
-    SALES_TO_PRODUCTS as SALES(PRODUCT_KEY) references PRODUCTS(PRODUCT_KEY),
-    SALES_TO_REGIONS as SALES(REGION_KEY) references REGIONS(REGION_KEY),
-    SALES_TO_REPS as SALES(SALES_REP_KEY) references SALES_REPS(SALES_REP_KEY),
-    SALES_TO_VENDORS as SALES(VENDOR_KEY) references VENDORS(VENDOR_KEY)
-  )
-  facts (
-    SALES.SALE_AMOUNT as amount comment='Sale amount in dollars',
-    SALES.SALE_RECORD as 1 comment='Count of sales transactions',
-    SALES.UNITS_SOLD as units comment='Number of units sold'
-  )
-  dimensions (
-    CUSTOMERS.CUSTOMER_INDUSTRY as INDUSTRY with synonyms=('industry','customer type') comment='Customer industry',
-    CUSTOMERS.CUSTOMER_KEY as CUSTOMER_KEY,
-    CUSTOMERS.CUSTOMER_NAME as customer_name with synonyms=('customer','client','account') comment='Name of the customer',
-    PRODUCTS.CATEGORY_KEY as CATEGORY_KEY with synonyms=('category_id','product_category','category_code','classification_key','group_key','product_group_id') comment='Unique identifier for the product category.',
-    PRODUCTS.PRODUCT_KEY as PRODUCT_KEY,
-    PRODUCTS.PRODUCT_NAME as product_name with synonyms=('product','item') comment='Name of the product',
-    PRODUCT_CATEGORY_DIM.CATEGORY_KEY as CATEGORY_KEY with synonyms=('category_id','category_code','product_category_number','category_identifier','classification_key') comment='Unique identifier for a product category.',
-    PRODUCT_CATEGORY_DIM.CATEGORY_NAME as CATEGORY_NAME with synonyms=('category_title','product_group','classification_name','category_label','product_category_description') comment='The category to which a product belongs, such as electronics, clothing, or software as a service.',
-    PRODUCT_CATEGORY_DIM.VERTICAL as VERTICAL with synonyms=('industry','sector','market','category_group','business_area','domain') comment='The industry or sector in which a product is categorized, such as retail, technology, or manufacturing.',
-    REGIONS.REGION_KEY as REGION_KEY,
-    REGIONS.REGION_NAME as region_name with synonyms=('region','territory','area') comment='Name of the region',
-    SALES.CUSTOMER_KEY as CUSTOMER_KEY,
-    SALES.PRODUCT_KEY as PRODUCT_KEY,
-    SALES.REGION_KEY as REGION_KEY,
-    SALES.SALES_REP_KEY as SALES_REP_KEY,
-    SALES.SALE_DATE as date with synonyms=('date','sale date','transaction date') comment='Date of the sale',
-    SALES.SALE_ID as SALE_ID,
-    SALES.SALE_MONTH as MONTH(date) comment='Month of the sale',
-    SALES.SALE_YEAR as YEAR(date) comment='Year of the sale',
-    SALES.VENDOR_KEY as VENDOR_KEY,
-    SALES_REPS.SALES_REP_KEY as SALES_REP_KEY,
-    SALES_REPS.SALES_REP_NAME as REP_NAME with synonyms=('sales rep','representative','salesperson') comment='Name of the sales representative',
-    VENDORS.VENDOR_KEY as VENDOR_KEY,
-    VENDORS.VENDOR_NAME as vendor_name with synonyms=('vendor','supplier','provider') comment='Name of the vendor'
-  )
-  metrics (
-    SALES.AVERAGE_DEAL_SIZE as AVG(sales.amount) comment='Average deal size',
-    SALES.AVERAGE_UNITS_PER_SALE as AVG(sales.units) comment='Average units per sale',
-    SALES.TOTAL_DEALS as COUNT(sales.sale_record) comment='Total number of deals',
-    SALES.TOTAL_REVENUE as SUM(sales.amount) comment='Total sales revenue',
-    SALES.TOTAL_UNITS as SUM(sales.units) comment='Total units sold'
-  )
-  comment='Semantic view for sales analysis and performance tracking'
-;
+        DEPARTMENTS AS DEPARTMENT_DIM PRIMARY KEY (DEPARTMENT_KEY)
+            WITH SYNONYMS = ('事業部','部門')
+            COMMENT = 'コストセンター分析向けの部門ディメンション',
 
+        VENDORS AS VENDOR_DIM PRIMARY KEY (VENDOR_KEY)
+            WITH SYNONYMS = ('サプライヤー','ベンダー')
+            COMMENT = '支出分析向けのベンダー情報',
 
--- MARKETING SEMANTIC VIEW
-create or replace semantic view MARKETING_SEMANTIC_VIEW
-  tables (
-    ACCOUNTS as SF_ACCOUNTS primary key (ACCOUNT_ID) with synonyms=('customers','accounts','clients') comment='Customer account information for revenue analysis',
-    CAMPAIGNS as MARKETING_CAMPAIGN_FACT primary key (CAMPAIGN_FACT_ID) with synonyms=('marketing campaigns','campaign data') comment='Marketing campaign performance data',
-    CAMPAIGN_DETAILS as CAMPAIGN_DIM primary key (CAMPAIGN_KEY) with synonyms=('campaign info','campaign details') comment='Campaign dimension with objectives and names',
-    CHANNELS as CHANNEL_DIM primary key (CHANNEL_KEY) with synonyms=('marketing channels','channels') comment='Marketing channel information',
-    CONTACTS as SF_CONTACTS primary key (CONTACT_ID) with synonyms=('leads','contacts','prospects') comment='Contact records generated from marketing campaigns',
-    CONTACTS_FOR_OPPORTUNITIES as SF_CONTACTS primary key (CONTACT_ID) with synonyms=('opportunity contacts') comment='Contact records generated from marketing campaigns, specifically for opportunities, not leads',
-    OPPORTUNITIES as SF_OPPORTUNITIES primary key (OPPORTUNITY_ID) with synonyms=('deals','opportunities','sales pipeline') comment='Sales opportunities and revenue data',
-    PRODUCTS as PRODUCT_DIM primary key (PRODUCT_KEY) with synonyms=('products','items') comment='Product dimension for campaign-specific analysis',
-    REGIONS as REGION_DIM primary key (REGION_KEY) with synonyms=('territories','regions','markets') comment='Regional information for campaign analysis'
-  )
-  relationships (
-    CAMPAIGNS_TO_CHANNELS as CAMPAIGNS(CHANNEL_KEY) references CHANNELS(CHANNEL_KEY),
-    CAMPAIGNS_TO_DETAILS as CAMPAIGNS(CAMPAIGN_KEY) references CAMPAIGN_DETAILS(CAMPAIGN_KEY),
-    CAMPAIGNS_TO_PRODUCTS as CAMPAIGNS(PRODUCT_KEY) references PRODUCTS(PRODUCT_KEY),
-    CAMPAIGNS_TO_REGIONS as CAMPAIGNS(REGION_KEY) references REGIONS(REGION_KEY),
-    CONTACTS_TO_ACCOUNTS as CONTACTS(ACCOUNT_ID) references ACCOUNTS(ACCOUNT_ID),
-    CONTACTS_TO_CAMPAIGNS as CONTACTS(CAMPAIGN_NO) references CAMPAIGNS(CAMPAIGN_FACT_ID),
-    CONTACTS_TO_OPPORTUNITIES as CONTACTS_FOR_OPPORTUNITIES(OPPORTUNITY_ID) references OPPORTUNITIES(OPPORTUNITY_ID),
-    OPPORTUNITIES_TO_ACCOUNTS as OPPORTUNITIES(ACCOUNT_ID) references ACCOUNTS(ACCOUNT_ID),
-    OPPORTUNITIES_TO_CAMPAIGNS as OPPORTUNITIES(CAMPAIGN_ID) references CAMPAIGNS(CAMPAIGN_FACT_ID)
-  )
-  facts (
-    PUBLIC CAMPAIGNS.CAMPAIGN_RECORD as 1 comment='Count of campaign activities',
-    PUBLIC CAMPAIGNS.CAMPAIGN_SPEND as spend comment='Marketing spend in dollars',
-    PUBLIC CAMPAIGNS.IMPRESSIONS as IMPRESSIONS comment='Number of impressions',
-    PUBLIC CAMPAIGNS.LEADS_GENERATED as LEADS_GENERATED comment='Number of leads generated',
-    PUBLIC CONTACTS.CONTACT_RECORD as 1 comment='Count of contacts generated',
-    PUBLIC OPPORTUNITIES.OPPORTUNITY_RECORD as 1 comment='Count of opportunities created',
-    PUBLIC OPPORTUNITIES.REVENUE as AMOUNT comment='Opportunity revenue in dollars'
-  )
-  dimensions (
-    PUBLIC ACCOUNTS.ACCOUNT_ID as ACCOUNT_ID,
-    PUBLIC ACCOUNTS.ACCOUNT_NAME as ACCOUNT_NAME with synonyms=('customer name','client name','company') comment='Name of the customer account',
-    PUBLIC ACCOUNTS.ACCOUNT_TYPE as ACCOUNT_TYPE with synonyms=('customer type','account category') comment='Type of customer account',
-    PUBLIC ACCOUNTS.ANNUAL_REVENUE as ANNUAL_REVENUE with synonyms=('customer revenue','company revenue') comment='Customer annual revenue',
-    PUBLIC ACCOUNTS.EMPLOYEES as EMPLOYEES with synonyms=('company size','employee count') comment='Number of employees at customer',
-    PUBLIC ACCOUNTS.INDUSTRY as INDUSTRY with synonyms=('industry','sector') comment='Customer industry',
-    PUBLIC ACCOUNTS.SALES_CUSTOMER_KEY as CUSTOMER_KEY with synonyms=('Customer No','Customer ID') comment='This is the customer key thank links the Salesforce account to customers table.',
-    PUBLIC CAMPAIGNS.CAMPAIGN_DATE as date with synonyms=('date','campaign date') comment='Date of the campaign activity',
-    PUBLIC CAMPAIGNS.CAMPAIGN_FACT_ID as CAMPAIGN_FACT_ID,
-    PUBLIC CAMPAIGNS.CAMPAIGN_KEY as CAMPAIGN_KEY,
-    PUBLIC CAMPAIGNS.CAMPAIGN_MONTH as MONTH(date) comment='Month of the campaign',
-    PUBLIC CAMPAIGNS.CAMPAIGN_YEAR as YEAR(date) comment='Year of the campaign',
-    PUBLIC CAMPAIGNS.CHANNEL_KEY as CHANNEL_KEY,
-    PUBLIC CAMPAIGNS.PRODUCT_KEY as PRODUCT_KEY with synonyms=('product_id','product identifier') comment='Product identifier for campaign targeting',
-    PUBLIC CAMPAIGNS.REGION_KEY as REGION_KEY,
-    PUBLIC CAMPAIGN_DETAILS.CAMPAIGN_KEY as CAMPAIGN_KEY,
-    PUBLIC CAMPAIGN_DETAILS.CAMPAIGN_NAME as CAMPAIGN_NAME with synonyms=('campaign','campaign title') comment='Name of the marketing campaign',
-    PUBLIC CAMPAIGN_DETAILS.CAMPAIGN_OBJECTIVE as OBJECTIVE with synonyms=('objective','goal','purpose') comment='Campaign objective',
-    PUBLIC CHANNELS.CHANNEL_KEY as CHANNEL_KEY,
-    PUBLIC CHANNELS.CHANNEL_NAME as CHANNEL_NAME with synonyms=('channel','marketing channel') comment='Name of the marketing channel',
-    PUBLIC CONTACTS.ACCOUNT_ID as ACCOUNT_ID,
-    PUBLIC CONTACTS.CAMPAIGN_NO as CAMPAIGN_NO,
-    PUBLIC CONTACTS.CONTACT_ID as CONTACT_ID,
-    PUBLIC CONTACTS.DEPARTMENT as DEPARTMENT with synonyms=('department','business unit') comment='Contact department',
-    PUBLIC CONTACTS.EMAIL as EMAIL with synonyms=('email','email address') comment='Contact email address',
-    PUBLIC CONTACTS.FIRST_NAME as FIRST_NAME with synonyms=('first name','contact name') comment='Contact first name',
-    PUBLIC CONTACTS.LAST_NAME as LAST_NAME with synonyms=('last name','surname') comment='Contact last name',
-    PUBLIC CONTACTS.LEAD_SOURCE as LEAD_SOURCE with synonyms=('lead source','source') comment='How the contact was generated',
-    PUBLIC CONTACTS.OPPORTUNITY_ID as OPPORTUNITY_ID,
-    PUBLIC CONTACTS.TITLE as TITLE with synonyms=('job title','position') comment='Contact job title',
-    PUBLIC OPPORTUNITIES.ACCOUNT_ID as ACCOUNT_ID,
-    PUBLIC OPPORTUNITIES.CAMPAIGN_ID as CAMPAIGN_ID with synonyms=('campaign fact id','marketing campaign id') comment='Campaign fact ID that links opportunity to marketing campaign',
-    PUBLIC OPPORTUNITIES.CLOSE_DATE as CLOSE_DATE with synonyms=('close date','expected close') comment='Expected or actual close date',
-    PUBLIC OPPORTUNITIES.OPPORTUNITY_ID as OPPORTUNITY_ID,
-    PUBLIC OPPORTUNITIES.OPPORTUNITY_LEAD_SOURCE as lead_source with synonyms=('opportunity source','deal source') comment='Source of the opportunity',
-    PUBLIC OPPORTUNITIES.OPPORTUNITY_NAME as OPPORTUNITY_NAME with synonyms=('deal name','opportunity title') comment='Name of the sales opportunity',
-    PUBLIC OPPORTUNITIES.OPPORTUNITY_STAGE as STAGE_NAME comment='Stage name of the opportinity. Closed Won indicates an actual sale with revenue',
-    PUBLIC OPPORTUNITIES.OPPORTUNITY_TYPE as TYPE with synonyms=('deal type','opportunity type') comment='Type of opportunity',
-    PUBLIC OPPORTUNITIES.SALES_SALE_ID as SALE_ID with synonyms=('sales id','invoice no') comment='Sales_ID for sales_fact table that links this opp to a sales record.',
-    PUBLIC PRODUCTS.PRODUCT_CATEGORY as CATEGORY_NAME with synonyms=('category','product category') comment='Category of the product',
-    PUBLIC PRODUCTS.PRODUCT_KEY as PRODUCT_KEY,
-    PUBLIC PRODUCTS.PRODUCT_NAME as PRODUCT_NAME with synonyms=('product','item','product title') comment='Name of the product being promoted',
-    PUBLIC PRODUCTS.PRODUCT_VERTICAL as VERTICAL with synonyms=('vertical','industry') comment='Business vertical of the product',
-    PUBLIC REGIONS.REGION_KEY as REGION_KEY,
-    PUBLIC REGIONS.REGION_NAME as REGION_NAME with synonyms=('region','market','territory') comment='Name of the region'
-  )
-  metrics (
-    PUBLIC CAMPAIGNS.AVERAGE_SPEND as AVG(CAMPAIGNS.spend) comment='Average campaign spend',
-    PUBLIC CAMPAIGNS.TOTAL_CAMPAIGNS as COUNT(CAMPAIGNS.campaign_record) comment='Total number of campaign activities',
-    PUBLIC CAMPAIGNS.TOTAL_IMPRESSIONS as SUM(CAMPAIGNS.impressions) comment='Total impressions across campaigns',
-    PUBLIC CAMPAIGNS.TOTAL_LEADS as SUM(CAMPAIGNS.leads_generated) comment='Total leads generated from campaigns',
-    PUBLIC CAMPAIGNS.TOTAL_SPEND as SUM(CAMPAIGNS.spend) comment='Total marketing spend',
-    PUBLIC CONTACTS.TOTAL_CONTACTS as COUNT(CONTACTS.contact_record) comment='Total contacts generated from campaigns',
-    PUBLIC OPPORTUNITIES.AVERAGE_DEAL_SIZE as AVG(OPPORTUNITIES.revenue) comment='Average opportunity size from marketing',
-    PUBLIC OPPORTUNITIES.CLOSED_WON_REVENUE as SUM(CASE WHEN OPPORTUNITIES.opportunity_stage = 'Closed Won' THEN OPPORTUNITIES.revenue ELSE 0 END) comment='Revenue from closed won opportunities',
-    PUBLIC OPPORTUNITIES.TOTAL_OPPORTUNITIES as COUNT(OPPORTUNITIES.opportunity_record) comment='Total opportunities from marketing',
-    PUBLIC OPPORTUNITIES.TOTAL_REVENUE as SUM(OPPORTUNITIES.revenue) comment='Total revenue from marketing-driven opportunities'
-  )
-  comment='Enhanced semantic view for marketing campaign analysis with complete revenue attribution and ROI tracking'
-;
+        PRODUCTS AS PRODUCT_DIM PRIMARY KEY (PRODUCT_KEY)
+            WITH SYNONYMS = ('製品','商品')
+            COMMENT = 'トランザクション分析用の製品ディメンション',
 
--- Display the semantic views
+        CUSTOMERS AS CUSTOMER_DIM PRIMARY KEY (CUSTOMER_KEY)
+            WITH SYNONYMS = ('顧客','クライアント')
+            COMMENT = '売上分析用の顧客ディメンション'
+    )
+    RELATIONSHIPS (
+        TRANSACTIONS_TO_ACCOUNTS      AS TRANSACTIONS(ACCOUNT_KEY)    REFERENCES ACCOUNTS(ACCOUNT_KEY),
+        TRANSACTIONS_TO_DEPARTMENTS   AS TRANSACTIONS(DEPARTMENT_KEY) REFERENCES DEPARTMENTS(DEPARTMENT_KEY),
+        TRANSACTIONS_TO_VENDORS       AS TRANSACTIONS(VENDOR_KEY)     REFERENCES VENDORS(VENDOR_KEY),
+        TRANSACTIONS_TO_PRODUCTS      AS TRANSACTIONS(PRODUCT_KEY)    REFERENCES PRODUCTS(PRODUCT_KEY),
+        TRANSACTIONS_TO_CUSTOMERS     AS TRANSACTIONS(CUSTOMER_KEY)   REFERENCES CUSTOMERS(CUSTOMER_KEY)
+    )
+    FACTS (
+        TRANSACTIONS.TRANSACTION_AMOUNT AS amount
+            COMMENT = '取引金額（ドル）',
+
+        TRANSACTIONS.TRANSACTION_RECORD AS 1
+            COMMENT = 'トランザクション件数'
+    )
+    DIMENSIONS (
+        TRANSACTIONS.TRANSACTION_DATE AS date
+            WITH SYNONYMS = ('日付','取引日')
+            COMMENT = '財務トランザクションの日付',
+
+        TRANSACTIONS.TRANSACTION_MONTH AS MONTH(date)
+            COMMENT = '取引月',
+
+        TRANSACTIONS.TRANSACTION_YEAR AS YEAR(date)
+            COMMENT = '取引年',
+
+        ACCOUNTS.ACCOUNT_NAME AS account_name
+            WITH SYNONYMS = ('勘定科目','アカウント名','アカウント種別')
+            COMMENT = '勘定科目名',
+
+        ACCOUNTS.ACCOUNT_TYPE AS account_type
+            WITH SYNONYMS = ('種別','カテゴリ')
+            COMMENT = 'アカウント種別（収益／費用）',
+
+        DEPARTMENTS.DEPARTMENT_NAME AS department_name
+            WITH SYNONYMS = ('部門','事業部')
+            COMMENT = '部門名',
+
+        VENDORS.VENDOR_NAME AS vendor_name
+            WITH SYNONYMS = ('ベンダー','サプライヤー')
+            COMMENT = 'ベンダー名',
+
+        PRODUCTS.PRODUCT_NAME AS product_name
+            WITH SYNONYMS = ('製品','商品')
+            COMMENT = '製品名',
+
+        CUSTOMERS.CUSTOMER_NAME AS customer_name
+            WITH SYNONYMS = ('顧客','クライアント')
+            COMMENT = '顧客名',
+
+        TRANSACTIONS.APPROVAL_STATUS AS approval_status
+            WITH SYNONYMS = ('承認','ステータス','承認状態')
+            COMMENT = 'トランザクション承認ステータス（承認済み／保留／却下）',
+
+        TRANSACTIONS.PROCUREMENT_METHOD AS procurement_method
+            WITH SYNONYMS = ('調達','方法','購買方法')
+            COMMENT = '調達方法（RFP／見積／緊急／契約など）',
+
+        TRANSACTIONS.APPROVER_ID AS approver_id
+            WITH SYNONYMS = ('承認者','承認者従業員ID')
+            COMMENT = '人事データに紐づく承認者の従業員ID',
+
+        TRANSACTIONS.APPROVAL_DATE AS approval_date
+            WITH SYNONYMS = ('承認日','承認された日付')
+            COMMENT = 'トランザクションが承認された日付',
+
+        TRANSACTIONS.PURCHASE_ORDER_NUMBER AS purchase_order_number
+            WITH SYNONYMS = ('発注番号','PO','購買発注書')
+            COMMENT = 'トラッキング用の購買発注番号',
+
+        TRANSACTIONS.CONTRACT_REFERENCE AS contract_reference
+            WITH SYNONYMS = ('契約','契約番号','契約参照')
+            COMMENT = '関連する契約の参照'
+    )
+    METRICS (
+        TRANSACTIONS.AVERAGE_AMOUNT AS AVG(transactions.amount)
+            COMMENT = '平均取引金額',
+
+        TRANSACTIONS.TOTAL_AMOUNT AS SUM(transactions.amount)
+            COMMENT = '取引金額合計',
+
+        TRANSACTIONS.TOTAL_TRANSACTIONS AS COUNT(transactions.transaction_record)
+            COMMENT = 'トランザクション件数合計'
+    )
+    COMMENT = '財務分析とレポーティング向けセマンティックビュー';
+
+---------------------------
+-- SALES SEMANTIC VIEW（日⽂）
+---------------------------
+CREATE OR REPLACE SEMANTIC VIEW SALES_SEMANTIC_VIEW
+  TABLES (
+    CUSTOMERS AS CUSTOMER_DIM PRIMARY KEY (CUSTOMER_KEY)
+        WITH SYNONYMS = ('顧客','クライアント','アカウント')
+        COMMENT = '売上分析用の顧客情報',
+
+    PRODUCTS AS PRODUCT_DIM PRIMARY KEY (PRODUCT_KEY)
+        WITH SYNONYMS = ('製品','商品','SKU')
+        COMMENT = '売上分析用の製品カタログ',
+
+    PRODUCT_CATEGORY_DIM PRIMARY KEY (CATEGORY_KEY),
+
+    REGIONS AS REGION_DIM PRIMARY KEY (REGION_KEY)
+        WITH SYNONYMS = ('テリトリー','地域','エリア')
+        COMMENT = 'テリトリー分析用の地域情報',
+
+    SALES AS SALES_FACT PRIMARY KEY (SALE_ID)
+        WITH SYNONYMS = ('売上トランザクション','売上データ')
+        COMMENT = 'すべての売上トランザクションと案件情報',
+
+    SALES_REPS AS SALES_REP_DIM PRIMARY KEY (SALES_REP_KEY)
+        WITH SYNONYMS = ('営業担当者','営業','セールス')
+        COMMENT = '営業担当者情報',
+
+    VENDORS AS VENDOR_DIM PRIMARY KEY (VENDOR_KEY)
+        WITH SYNONYMS = ('サプライヤー','ベンダー')
+        COMMENT = 'サプライチェーン分析用のベンダー情報'
+  )
+  RELATIONSHIPS (
+    PRODUCT_TO_CATEGORY  AS PRODUCTS(CATEGORY_KEY)  REFERENCES PRODUCT_CATEGORY_DIM(CATEGORY_KEY),
+    SALES_TO_CUSTOMERS   AS SALES(CUSTOMER_KEY)     REFERENCES CUSTOMERS(CUSTOMER_KEY),
+    SALES_TO_PRODUCTS    AS SALES(PRODUCT_KEY)      REFERENCES PRODUCTS(PRODUCT_KEY),
+    SALES_TO_REGIONS     AS SALES(REGION_KEY)       REFERENCES REGIONS(REGION_KEY),
+    SALES_TO_REPS        AS SALES(SALES_REP_KEY)    REFERENCES SALES_REPS(SALES_REP_KEY),
+    SALES_TO_VENDORS     AS SALES(VENDOR_KEY)       REFERENCES VENDORS(VENDOR_KEY)
+  )
+  FACTS (
+    SALES.SALE_AMOUNT AS amount
+        COMMENT = '売上金額（ドル）',
+
+    SALES.SALE_RECORD AS 1
+        COMMENT = '売上トランザクション件数',
+
+    SALES.UNITS_SOLD AS units
+        COMMENT = '販売数量'
+  )
+  DIMENSIONS (
+    CUSTOMERS.CUSTOMER_INDUSTRY AS INDUSTRY
+        WITH SYNONYMS = ('業種','顧客タイプ')
+        COMMENT = '顧客の業種',
+
+    CUSTOMERS.CUSTOMER_KEY AS CUSTOMER_KEY,
+
+    CUSTOMERS.CUSTOMER_NAME AS customer_name
+        WITH SYNONYMS = ('顧客','クライアント','アカウント名')
+        COMMENT = '顧客名',
+
+    PRODUCTS.CATEGORY_KEY AS CATEGORY_KEY
+        WITH SYNONYMS = ('カテゴリID','製品カテゴリ','カテゴリコード','分類キー','グループキー','製品グループID')
+        COMMENT = '製品カテゴリの一意キー',
+
+    PRODUCTS.PRODUCT_KEY AS PRODUCT_KEY,
+
+    PRODUCTS.PRODUCT_NAME AS product_name
+        WITH SYNONYMS = ('製品','商品')
+        COMMENT = '製品名',
+
+    PRODUCT_CATEGORY_DIM.CATEGORY_KEY AS CATEGORY_KEY
+        WITH SYNONYMS = ('カテゴリID','カテゴリコード','製品カテゴリ番号','カテゴリ識別子','分類キー')
+        COMMENT = '製品カテゴリの一意キー',
+
+    PRODUCT_CATEGORY_DIM.CATEGORY_NAME AS CATEGORY_NAME
+        WITH SYNONYMS = ('カテゴリ名','製品グループ','分類名','カテゴリラベル','製品カテゴリ説明')
+        COMMENT = '「家電」「衣料」「SaaS」などの製品カテゴリ',
+
+    PRODUCT_CATEGORY_DIM.VERTICAL AS VERTICAL
+        WITH SYNONYMS = ('業界','セクター','市場','カテゴリグループ','ビジネス領域','ドメイン')
+        COMMENT = '製品が属する業界・セクター（リテール、テクノロジー、製造など）',
+
+    REGIONS.REGION_KEY AS REGION_KEY,
+
+    REGIONS.REGION_NAME AS region_name
+        WITH SYNONYMS = ('地域','テリトリー','エリア')
+        COMMENT = '地域名',
+
+    SALES.CUSTOMER_KEY AS CUSTOMER_KEY,
+    SALES.PRODUCT_KEY  AS PRODUCT_KEY,
+    SALES.REGION_KEY   AS REGION_KEY,
+    SALES.SALES_REP_KEY AS SALES_REP_KEY,
+
+    SALES.SALE_DATE AS date
+        WITH SYNONYMS = ('日付','売上日','取引日')
+        COMMENT = '売上が発生した日付',
+
+    SALES.SALE_ID AS SALE_ID,
+
+    SALES.SALE_MONTH AS MONTH(date)
+        COMMENT = '売上月',
+
+    SALES.SALE_YEAR AS YEAR(date)
+        COMMENT = '売上年',
+
+    SALES.VENDOR_KEY AS VENDOR_KEY,
+
+    SALES_REPS.SALES_REP_KEY AS SALES_REP_KEY,
+
+    SALES_REPS.SALES_REP_NAME AS REP_NAME
+        WITH SYNONYMS = ('営業担当','営業','セールス担当')
+        COMMENT = '営業担当者名',
+
+    VENDORS.VENDOR_KEY AS VENDOR_KEY,
+
+    VENDORS.VENDOR_NAME AS vendor_name
+        WITH SYNONYMS = ('ベンダー','サプライヤー','プロバイダー')
+        COMMENT = 'ベンダー名'
+  )
+  METRICS (
+    SALES.AVERAGE_DEAL_SIZE AS AVG(sales.amount)
+        COMMENT = '平均案件金額',
+
+    SALES.AVERAGE_UNITS_PER_SALE AS AVG(sales.units)
+        COMMENT = '1件あたり平均販売数量',
+
+    SALES.TOTAL_DEALS AS COUNT(sales.sale_record)
+        COMMENT = '案件数合計',
+
+    SALES.TOTAL_REVENUE AS SUM(sales.amount)
+        COMMENT = '売上金額合計',
+
+    SALES.TOTAL_UNITS AS SUM(sales.units)
+        COMMENT = '販売数量合計'
+  )
+  COMMENT = '売上分析およびパフォーマンス管理向けセマンティックビュー';
+
+------------------------------
+-- MARKETING SEMANTIC VIEW（日⽂）
+------------------------------
+CREATE OR REPLACE SEMANTIC VIEW MARKETING_SEMANTIC_VIEW
+  TABLES (
+    ACCOUNTS AS SF_ACCOUNTS PRIMARY KEY (ACCOUNT_ID)
+        WITH SYNONYMS = ('顧客','アカウント','クライアント')
+        COMMENT = '売上分析用の顧客アカウント情報',
+
+    CAMPAIGNS AS MARKETING_CAMPAIGN_FACT PRIMARY KEY (CAMPAIGN_FACT_ID)
+        WITH SYNONYMS = ('マーケティングキャンペーン','キャンペーンデータ')
+        COMMENT = 'マーケティングキャンペーンのパフォーマンスデータ',
+
+    CAMPAIGN_DETAILS AS CAMPAIGN_DIM PRIMARY KEY (CAMPAIGN_KEY)
+        WITH SYNONYMS = ('キャンペーン情報','キャンペーン詳細')
+        COMMENT = 'キャンペーン名や目的などを持つディメンション',
+
+    CHANNELS AS CHANNEL_DIM PRIMARY KEY (CHANNEL_KEY)
+        WITH SYNONYMS = ('マーケティングチャネル','チャネル')
+        COMMENT = 'マーケティングチャネル情報',
+
+    CONTACTS AS SF_CONTACTS PRIMARY KEY (CONTACT_ID)
+        WITH SYNONYMS = ('リード','コンタクト','見込み客')
+        COMMENT = 'キャンペーンから生成されたコンタクトレコード',
+
+    CONTACTS_FOR_OPPORTUNITIES AS SF_CONTACTS PRIMARY KEY (CONTACT_ID)
+        WITH SYNONYMS = ('案件コンタクト')
+        COMMENT = 'リードではなく案件に紐づくコンタクトレコード',
+
+    OPPORTUNITIES AS SF_OPPORTUNITIES PRIMARY KEY (OPPORTUNITY_ID)
+        WITH SYNONYMS = ('案件','商談','パイプライン')
+        COMMENT = '案件・売上金額の情報',
+
+    PRODUCTS AS PRODUCT_DIM PRIMARY KEY (PRODUCT_KEY)
+        WITH SYNONYMS = ('製品','商品')
+        COMMENT = 'キャンペーン別分析用の製品ディメンション',
+
+    REGIONS AS REGION_DIM PRIMARY KEY (REGION_KEY)
+        WITH SYNONYMS = ('テリトリー','地域','マーケット')
+        COMMENT = 'キャンペーン分析用の地域情報'
+  )
+  RELATIONSHIPS (
+    CAMPAIGNS_TO_CHANNELS       AS CAMPAIGNS(CHANNEL_KEY)    REFERENCES CHANNELS(CHANNEL_KEY),
+    CAMPAIGNS_TO_DETAILS        AS CAMPAIGNS(CAMPAIGN_KEY)   REFERENCES CAMPAIGN_DETAILS(CAMPAIGN_KEY),
+    CAMPAIGNS_TO_PRODUCTS       AS CAMPAIGNS(PRODUCT_KEY)    REFERENCES PRODUCTS(PRODUCT_KEY),
+    CAMPAIGNS_TO_REGIONS        AS CAMPAIGNS(REGION_KEY)     REFERENCES REGIONS(REGION_KEY),
+    CONTACTS_TO_ACCOUNTS        AS CONTACTS(ACCOUNT_ID)      REFERENCES ACCOUNTS(ACCOUNT_ID),
+    CONTACTS_TO_CAMPAIGNS       AS CONTACTS(CAMPAIGN_NO)     REFERENCES CAMPAIGNS(CAMPAIGN_FACT_ID),
+    CONTACTS_TO_OPPORTUNITIES   AS CONTACTS_FOR_OPPORTUNITIES(OPPORTUNITY_ID) REFERENCES OPPORTUNITIES(OPPORTUNITY_ID),
+    OPPORTUNITIES_TO_ACCOUNTS   AS OPPORTUNITIES(ACCOUNT_ID) REFERENCES ACCOUNTS(ACCOUNT_ID),
+    OPPORTUNITIES_TO_CAMPAIGNS  AS OPPORTUNITIES(CAMPAIGN_ID) REFERENCES CAMPAIGNS(CAMPAIGN_FACT_ID)
+  )
+  FACTS (
+    PUBLIC CAMPAIGNS.CAMPAIGN_RECORD     AS 1        COMMENT = 'キャンペーンアクティビティ件数',
+    PUBLIC CAMPAIGNS.CAMPAIGN_SPEND      AS spend    COMMENT = 'マーケティング費用（ドル）',
+    PUBLIC CAMPAIGNS.IMPRESSIONS         AS IMPRESSIONS      COMMENT = 'インプレッション数',
+    PUBLIC CAMPAIGNS.LEADS_GENERATED     AS LEADS_GENERATED  COMMENT = '獲得リード数',
+    PUBLIC CONTACTS.CONTACT_RECORD       AS 1        COMMENT = '生成されたコンタクト件数',
+    PUBLIC OPPORTUNITIES.OPPORTUNITY_RECORD AS 1     COMMENT = '生成された案件件数',
+    PUBLIC OPPORTUNITIES.REVENUE         AS AMOUNT   COMMENT = '案件売上金額（ドル）'
+  )
+  DIMENSIONS (
+    PUBLIC ACCOUNTS.ACCOUNT_ID   AS ACCOUNT_ID,
+
+    PUBLIC ACCOUNTS.ACCOUNT_NAME AS ACCOUNT_NAME
+        WITH SYNONYMS = ('顧客名','クライアント名','会社名')
+        COMMENT = '顧客アカウント名',
+
+    PUBLIC ACCOUNTS.ACCOUNT_TYPE AS ACCOUNT_TYPE
+        WITH SYNONYMS = ('顧客タイプ','アカウントカテゴリ')
+        COMMENT = '顧客アカウント種別',
+
+    PUBLIC ACCOUNTS.ANNUAL_REVENUE AS ANNUAL_REVENUE
+        WITH SYNONYMS = ('顧客売上','年間売上')
+        COMMENT = '顧客の年間売上',
+
+    PUBLIC ACCOUNTS.EMPLOYEES AS EMPLOYEES
+        WITH SYNONYMS = ('企業規模','従業員数')
+        COMMENT = '顧客企業の従業員数',
+
+    PUBLIC ACCOUNTS.INDUSTRY AS INDUSTRY
+        WITH SYNONYMS = ('業界','セクター')
+        COMMENT = '顧客の業界',
+
+    PUBLIC ACCOUNTS.SALES_CUSTOMER_KEY AS CUSTOMER_KEY
+        WITH SYNONYMS = ('顧客番号','顧客ID')
+        COMMENT = 'Salesforceアカウントと顧客テーブルを紐づけるキー',
+
+    PUBLIC CAMPAIGNS.CAMPAIGN_DATE AS date
+        WITH SYNONYMS = ('日付','キャンペーン日')
+        COMMENT = 'キャンペーンアクティビティの日付',
+
+    PUBLIC CAMPAIGNS.CAMPAIGN_FACT_ID AS CAMPAIGN_FACT_ID,
+    PUBLIC CAMPAIGNS.CAMPAIGN_KEY     AS CAMPAIGN_KEY,
+
+    PUBLIC CAMPAIGNS.CAMPAIGN_MONTH AS MONTH(date)
+        COMMENT = 'キャンペーン月',
+
+    PUBLIC CAMPAIGNS.CAMPAIGN_YEAR AS YEAR(date)
+        COMMENT = 'キャンペーン年',
+
+    PUBLIC CAMPAIGNS.CHANNEL_KEY AS CHANNEL_KEY,
+
+    PUBLIC CAMPAIGNS.PRODUCT_KEY AS PRODUCT_KEY
+        WITH SYNONYMS = ('製品ID','製品識別子')
+        COMMENT = 'ターゲット製品の識別子',
+
+    PUBLIC CAMPAIGNS.REGION_KEY AS REGION_KEY,
+
+    PUBLIC CAMPAIGN_DETAILS.CAMPAIGN_KEY AS CAMPAIGN_KEY,
+
+    PUBLIC CAMPAIGN_DETAILS.CAMPAIGN_NAME AS CAMPAIGN_NAME
+        WITH SYNONYMS = ('キャンペーン','キャンペーン名')
+        COMMENT = 'マーケティングキャンペーン名',
+
+    PUBLIC CAMPAIGN_DETAILS.CAMPAIGN_OBJECTIVE AS OBJECTIVE
+        WITH SYNONYMS = ('目的','ゴール','狙い')
+        COMMENT = 'キャンペーン目的（認知向上／ブランディング／リード獲得／製品ローンチ／継続利用／アップセル など）',
+
+    PUBLIC CHANNELS.CHANNEL_KEY AS CHANNEL_KEY,
+
+    PUBLIC CHANNELS.CHANNEL_NAME AS CHANNEL_NAME
+        WITH SYNONYMS = ('チャネル','マーケティングチャネル')
+        COMMENT = 'マーケティングチャネル名',
+
+    PUBLIC CONTACTS.ACCOUNT_ID AS ACCOUNT_ID,
+    PUBLIC CONTACTS.CAMPAIGN_NO AS CAMPAIGN_NO,
+    PUBLIC CONTACTS.CONTACT_ID AS CONTACT_ID,
+
+    PUBLIC CONTACTS.DEPARTMENT AS DEPARTMENT
+        WITH SYNONYMS = ('部署','部門','事業部')
+        COMMENT = 'コンタクトの所属部署',
+
+    PUBLIC CONTACTS.EMAIL AS EMAIL
+        WITH SYNONYMS = ('メール','メールアドレス')
+        COMMENT = 'コンタクトのメールアドレス',
+
+    PUBLIC CONTACTS.FIRST_NAME AS FIRST_NAME
+        WITH SYNONYMS = ('名','ファーストネーム','担当者名')
+        COMMENT = 'コンタクトの名',
+
+    PUBLIC CONTACTS.LAST_NAME AS LAST_NAME
+        WITH SYNONYMS = ('姓','ラストネーム')
+        COMMENT = 'コンタクトの姓',
+
+    PUBLIC CONTACTS.LEAD_SOURCE AS LEAD_SOURCE
+        WITH SYNONYMS = ('リードソース','流入元')
+        COMMENT = 'コンタクトがどの経路で獲得されたか',
+
+    PUBLIC CONTACTS.OPPORTUNITY_ID AS OPPORTUNITY_ID,
+
+    PUBLIC CONTACTS.TITLE AS TITLE
+        WITH SYNONYMS = ('役職','職位')
+        COMMENT = 'コンタクトの役職',
+
+    PUBLIC OPPORTUNITIES.ACCOUNT_ID AS ACCOUNT_ID,
+
+    PUBLIC OPPORTUNITIES.CAMPAIGN_ID AS CAMPAIGN_ID
+        WITH SYNONYMS = ('キャンペーンFACT ID','マーケティングキャンペーンID')
+        COMMENT = '案件を起点とするマーケティングキャンペーンのID',
+
+    PUBLIC OPPORTUNITIES.CLOSE_DATE AS CLOSE_DATE
+        WITH SYNONYMS = ('クローズ日','予定クローズ日')
+        COMMENT = '案件の予定または実際のクローズ日',
+
+    PUBLIC OPPORTUNITIES.OPPORTUNITY_ID AS OPPORTUNITY_ID,
+
+    PUBLIC OPPORTUNITIES.OPPORTUNITY_LEAD_SOURCE AS lead_source
+        WITH SYNONYMS = ('案件ソース','商談ソース')
+        COMMENT = '案件の獲得経路',
+
+    PUBLIC OPPORTUNITIES.OPPORTUNITY_NAME AS OPPORTUNITY_NAME
+        WITH SYNONYMS = ('案件名','商談名')
+        COMMENT = '案件名',
+
+    PUBLIC OPPORTUNITIES.OPPORTUNITY_STAGE AS STAGE_NAME
+        COMMENT = '案件ステージ名（Closed Won は売上確定を示す）',
+
+    PUBLIC OPPORTUNITIES.OPPORTUNITY_TYPE AS TYPE
+        WITH SYNONYMS = ('案件タイプ','商談タイプ')
+        COMMENT = '案件の種類',
+
+    PUBLIC OPPORTUNITIES.SALES_SALE_ID AS SALE_ID
+        WITH SYNONYMS = ('売上ID','請求書番号')
+        COMMENT = 'sales_fact テーブルの Sales_ID。案件と売上レコードを紐づけるキー。',
+
+    PUBLIC PRODUCTS.PRODUCT_CATEGORY AS CATEGORY_NAME
+        WITH SYNONYMS = ('カテゴリ','製品カテゴリ')
+        COMMENT = '製品カテゴリ',
+
+    PUBLIC PRODUCTS.PRODUCT_KEY AS PRODUCT_KEY,
+
+    PUBLIC PRODUCTS.PRODUCT_NAME AS PRODUCT_NAME
+        WITH SYNONYMS = ('製品','商品','製品タイトル')
+        COMMENT = 'プロモーション対象製品名',
+
+    PUBLIC PRODUCTS.PRODUCT_VERTICAL AS VERTICAL
+        WITH SYNONYMS = ('バーティカル','業界')
+        COMMENT = '製品が属するビジネスバーティカル',
+
+    PUBLIC REGIONS.REGION_KEY AS REGION_KEY,
+
+    PUBLIC REGIONS.REGION_NAME AS REGION_NAME
+        WITH SYNONYMS = ('地域','マーケット','テリトリー')
+        COMMENT = '地域名'
+  )
+  METRICS (
+    PUBLIC CAMPAIGNS.AVERAGE_SPEND AS AVG(CAMPAIGNS.spend)
+        COMMENT = '平均キャンペーン費用',
+
+    PUBLIC CAMPAIGNS.TOTAL_CAMPAIGNS AS COUNT(CAMPAIGNS.campaign_record)
+        COMMENT = 'キャンペーンアクティビティ件数合計',
+
+    PUBLIC CAMPAIGNS.TOTAL_IMPRESSIONS AS SUM(CAMPAIGNS.impressions)
+        COMMENT = 'インプレッション合計',
+
+    PUBLIC CAMPAIGNS.TOTAL_LEADS AS SUM(CAMPAIGNS.leads_generated)
+        COMMENT = 'キャンペーン起点のリード獲得数合計',
+
+    PUBLIC CAMPAIGNS.TOTAL_SPEND AS SUM(CAMPAIGNS.spend)
+        COMMENT = 'マーケティング費用合計',
+
+    PUBLIC CONTACTS.TOTAL_CONTACTS AS COUNT(CONTACTS.contact_record)
+        COMMENT = 'キャンペーンから生成されたコンタクト数合計',
+
+    PUBLIC OPPORTUNITIES.AVERAGE_DEAL_SIZE AS AVG(OPPORTUNITIES.revenue)
+        COMMENT = 'マーケ起点案件の平均案件金額',
+
+    PUBLIC OPPORTUNITIES.CLOSED_WON_REVENUE AS SUM(
+        CASE WHEN OPPORTUNITIES.opportunity_stage = 'Closed Won'
+             THEN OPPORTUNITIES.revenue ELSE 0 END)
+        COMMENT = 'Closed Won 案件からの売上金額',
+
+    PUBLIC OPPORTUNITIES.TOTAL_OPPORTUNITIES AS COUNT(OPPORTUNITIES.opportunity_record)
+        COMMENT = 'マーケティング起点の案件数合計',
+
+    PUBLIC OPPORTUNITIES.TOTAL_REVENUE AS SUM(OPPORTUNITIES.revenue)
+        COMMENT = 'マーケティング起点案件からの売上合計'
+  )
+  COMMENT = 'マーケティングキャンペーン分析およびROI可視化向けセマンティックビュー';
+
+-- 動作確認
 SHOW SEMANTIC VIEWS;
