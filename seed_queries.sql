@@ -4,8 +4,8 @@ USE DATABASE SV_VHOL_DB;
 USE SCHEMA VHOL_SCHEMA;
 
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count
 FROM HR_EMPLOYEE_FACT f
@@ -16,7 +16,7 @@ ORDER BY employee_count DESC;
 
 -- 2. Average Salary by Department and Gender
 -- Business Question: "What is the average salary by department and gender?"
-SELECT 
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     e.GENDER,
     AVG(f.SALARY) as avg_salary,
@@ -29,8 +29,8 @@ JOIN EMPLOYEE_DIM e
 GROUP BY d.DEPARTMENT_NAME, e.GENDER
 ORDER BY d.DEPARTMENT_NAME, e.GENDER;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     COUNT(*) as total_records,
     SUM(f.ATTRITION_FLAG) as attrition_count,
@@ -41,8 +41,8 @@ JOIN DEPARTMENT_DIM d
 GROUP BY d.DEPARTMENT_NAME
 ORDER BY attrition_rate_pct DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     EXTRACT(YEAR FROM f.DATE) as year,
     EXTRACT(MONTH FROM f.DATE) as month,
     AVG(f.SALARY) as avg_salary,
@@ -53,8 +53,8 @@ FROM HR_EMPLOYEE_FACT f
 GROUP BY EXTRACT(YEAR FROM f.DATE), EXTRACT(MONTH FROM f.DATE)
 ORDER BY year, month;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     AVG(DATEDIFF('day', e.HIRE_DATE, f.DATE)) as avg_tenure_days,
     AVG(DATEDIFF('month', e.HIRE_DATE, f.DATE)) as avg_tenure_months,
@@ -67,8 +67,8 @@ JOIN EMPLOYEE_DIM e
 GROUP BY d.DEPARTMENT_NAME
 ORDER BY avg_tenure_days DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     e.EMPLOYEE_NAME,
     d.DEPARTMENT_NAME,
     j.JOB_TITLE,
@@ -84,8 +84,8 @@ JOIN JOB_DIM j
 ORDER BY f.SALARY DESC
 LIMIT 10;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     j.JOB_TITLE,
     j.JOB_LEVEL,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
@@ -96,8 +96,8 @@ JOIN JOB_DIM j
 GROUP BY j.JOB_TITLE, j.JOB_LEVEL
 ORDER BY j.JOB_LEVEL, employee_count DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     l.LOCATION_NAME,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
     AVG(f.SALARY) as avg_salary,
@@ -108,8 +108,8 @@ JOIN LOCATION_DIM l
 GROUP BY l.LOCATION_NAME
 ORDER BY employee_count DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     e.GENDER,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
@@ -123,8 +123,8 @@ JOIN EMPLOYEE_DIM e
 GROUP BY d.DEPARTMENT_NAME, e.GENDER
 ORDER BY d.DEPARTMENT_NAME, e.GENDER;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     EXTRACT(YEAR FROM f.DATE) as year,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
@@ -135,8 +135,8 @@ JOIN DEPARTMENT_DIM d
 GROUP BY d.DEPARTMENT_NAME, EXTRACT(YEAR FROM f.DATE)
 ORDER BY d.DEPARTMENT_NAME, year;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     j.JOB_TITLE,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
     MIN(f.SALARY) as min_salary,
@@ -149,8 +149,8 @@ JOIN JOB_DIM j
 GROUP BY j.JOB_TITLE
 ORDER BY avg_salary DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
     SUM(f.SALARY) as total_salary_cost,
@@ -163,8 +163,8 @@ JOIN DEPARTMENT_DIM d
 GROUP BY d.DEPARTMENT_NAME
 ORDER BY total_salary_cost DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
     PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY f.SALARY) as p25_salary,
@@ -177,8 +177,8 @@ JOIN DEPARTMENT_DIM d
 GROUP BY d.DEPARTMENT_NAME
 ORDER BY p50_salary DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     j.JOB_LEVEL,
     j.JOB_TITLE,
     COUNT(*) as total_records,
@@ -192,8 +192,8 @@ WHERE j.JOB_LEVEL IS NOT NULL
 GROUP BY j.JOB_LEVEL, j.JOB_TITLE
 ORDER BY attrition_rate_pct DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     CASE 
         WHEN DATEDIFF('month', e.HIRE_DATE, f.DATE) <= 12 THEN 'Recent Hire (≤12 months)'
         WHEN DATEDIFF('month', e.HIRE_DATE, f.DATE) <= 24 THEN 'Mid-tenure (13-24 months)'
@@ -208,8 +208,8 @@ JOIN EMPLOYEE_DIM e
 GROUP BY tenure_category
 ORDER BY attrition_rate_pct DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     CASE 
         WHEN f.SALARY < 40000 THEN 'Low Salary (<40k)'
         WHEN f.SALARY < 60000 THEN 'Mid Salary (40k-60k)'
@@ -223,8 +223,8 @@ FROM HR_EMPLOYEE_FACT f
 GROUP BY salary_bracket
 ORDER BY avg_salary;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     EXTRACT(YEAR FROM f.DATE) as year,
     EXTRACT(MONTH FROM f.DATE) as month,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as active_employees,
@@ -234,8 +234,8 @@ FROM HR_EMPLOYEE_FACT f
 GROUP BY EXTRACT(YEAR FROM f.DATE), EXTRACT(MONTH FROM f.DATE)
 ORDER BY year, month;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     EXTRACT(YEAR FROM f.DATE) as year,
     CASE 
         WHEN EXTRACT(MONTH FROM f.DATE) IN (1,2,3) THEN 'Q1'
@@ -250,8 +250,8 @@ FROM HR_EMPLOYEE_FACT f
 GROUP BY EXTRACT(YEAR FROM f.DATE), quarter
 ORDER BY year, quarter;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     f.EMPLOYEE_KEY,
     e.EMPLOYEE_NAME,
     COUNT(DISTINCT f.DEPARTMENT_KEY) as departments_worked,
@@ -265,8 +265,8 @@ GROUP BY f.EMPLOYEE_KEY, e.EMPLOYEE_NAME
 HAVING COUNT(DISTINCT f.DEPARTMENT_KEY) > 1
 ORDER BY departments_worked DESC, avg_salary DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     e.EMPLOYEE_NAME,
     d.DEPARTMENT_NAME,
     MIN(f.SALARY) as starting_salary,
@@ -282,8 +282,8 @@ GROUP BY e.EMPLOYEE_NAME, d.DEPARTMENT_NAME
 HAVING COUNT(*) > 1
 ORDER BY growth_pct DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as total_employees,
     COUNT(DISTINCT CASE WHEN e.GENDER = 'F' THEN f.EMPLOYEE_KEY END) as female_employees,
@@ -299,8 +299,8 @@ JOIN EMPLOYEE_DIM e
 GROUP BY d.DEPARTMENT_NAME
 ORDER BY total_employees DESC;
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     'Total Employees' as metric,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as value
 FROM HR_EMPLOYEE_FACT f
@@ -330,8 +330,8 @@ SELECT
 FROM HR_EMPLOYEE_FACT f
 WHERE f.DATE = (SELECT MAX(DATE) FROM HR_EMPLOYEE_FACT);
 
--- VHOL Seed Query
-SELECT 
+
+SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
     COUNT(DISTINCT f.EMPLOYEE_KEY) as employee_count,
     AVG(f.SALARY) as avg_salary,
@@ -352,4 +352,15 @@ GROUP BY d.DEPARTMENT_NAME
 ORDER BY health_score DESC;
 
 SELECT 1;
+
+ALTER SESSION SET TIMEZONE = 'Asia/Tokyo';
+
+SELECT 
+query_text,
+start_time
+FROM Snowflake.account_usage.query_history
+where query_text ilike '%d.DEPARTMENT_NAME%'
+order by start_time desc
+limit 100
+;
 
