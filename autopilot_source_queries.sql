@@ -1,10 +1,9 @@
 --- optional - if this is not your first time running through this lab, you may want to run this command before creating your HR_SEMANTIC_VIEW
+-- USE ROLE agentic_analytics_vhol_role;
+-- USE DATABASE SV_VHOL_DB;
+-- USE SCHEMA VHOL_SCHEMA;
 
-USE ROLE agentic_analytics_vhol_role;
-USE DATABASE SV_VHOL_DB;
-USE SCHEMA VHOL_SCHEMA;
-
-DROP SEMANTIC VIEW HR_SEMANTIC_VIEW;
+-- DROP SEMANTIC VIEW HR_SEMANTIC_VIEW;
 
 
 //Q1 
