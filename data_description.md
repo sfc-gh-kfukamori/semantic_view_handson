@@ -243,5 +243,3 @@
 
 このセットをベースに、Sales / Marketing / Finance / HR の **Semantic View** を載せて、  
 Cortex Analyst や Intelligence Agent から「部門横断のビジネス質問」に答える、というのがこの VHOL のゴールになっています。
-
-ER図やサンプルクエリ、各テーブルのサンプルデータを作成しましょうか？
