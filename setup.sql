@@ -1,6 +1,9 @@
 --- This script borrows heavily from the Snowflake Intelligence end to end demo here: https://github.com/NickAkincilar/Snowflake_AI_DEMO
-
 --- should take around 2 minutes to run completely
+
+////
+//本ハンズオンで使用するテーブル群を準備します。
+///
 
 
  -- Switch to accountadmin role to create warehouse
@@ -521,10 +524,11 @@ use role agentic_analytics_vhol_role;
     UNION ALL
     SELECT '', 'sf_contacts', COUNT(*) FROM sf_contacts;
 
-    -- Show all tables
+
+    -- 作成されたテーブルを確認（20個のテーブルが作成されます）
     SHOW TABLES IN SCHEMA VHOL_SCHEMA; 
 
-
+    
     /////作成したデータの確認
     -- select * from sv_vhol_db.vhol_schema.CHANNEL_DIM; 
     -- select * from sv_vhol_db.vhol_schema.CUSTOMER_DIM; 
