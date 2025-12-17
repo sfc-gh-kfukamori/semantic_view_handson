@@ -3,15 +3,6 @@
 Snowflake Quickstart:  
 https://www.snowflake.com/en/developers/guides/snowflake-semantic-view-agentic-analytics/
 
-## Contents
-
-# 目次
-# 目次
-- [セットアップ](##セットアップ)
-- [メインセクション2](#メインセクション2)
-- [メインセクション3](#メインセクション3)
-
-
 ## セットアップ
 
 ## setup.sqlで生成されるオブジェクト
