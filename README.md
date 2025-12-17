@@ -93,9 +93,7 @@ OWNERは全て: AGENTIC_ANALYTICS_VHOL_ROLE
         └─ USAGE ON SCHEMA AGENTIC_ANALYTICS_VHOL.AGENTS
            （agents スキーマ内に今後作成されるオブジェクトは、
              オブジェクトごとに別途権限が必要）
-``` 
-
-# メインセクション1
+```
 
 ## ER図
 
