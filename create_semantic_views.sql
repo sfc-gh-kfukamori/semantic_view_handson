@@ -1,3 +1,14 @@
+-- こすでに作成済みのファクト／ディメンションテーブルの上に、
+-- 財務・売上・マーケティングの3つのセマンティックビューを定義し、
+-- Cortex AnalystやSQLから使える ビジネス向けの意味レイヤーを作っています。
+
+-- TABLES … どの物理テーブルを論理テーブルとして見せるか。
+-- RELATIONSHIPS … テーブル間のリレーション（JOIN 関係）。正しく JOIN する道筋を理解できます。
+-- FACTS … 明細値（元となる数値）
+-- DIMENSIONS … 軸・属性（グルーピングに使う列）
+-- METRICS … 集計指標（SUM / AVG / COUNT などのKPI）
+-- WITH SYNONYMS / COMMENT … 自然言語での問い合わせ精度を上げるためのメタデータ
+
 USE ROLE agentic_analytics_vhol_role;
 USE DATABASE SV_VHOL_DB;
 USE SCHEMA VHOL_SCHEMA;
@@ -7,8 +18,10 @@ USE SCHEMA VHOL_SCHEMA;
 -----------------------------
 CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
     TABLES (
-        TRANSACTIONS AS FINANCE_TRANSACTIONS PRIMARY KEY (TRANSACTION_ID)
-            WITH SYNONYMS = ('財務トランザクション','財務データ')
+    --物理テーブルを、ビジネス的に分かりやすい論理テーブル名としてマッピング。
+    -- PRIMARY KEYで、各論理テーブルの主キー列を宣言しています。
+        TRANSACTIONS AS FINANCE_TRANSACTIONS PRIMARY KEY (TRANSACTION_ID) 
+            WITH SYNONYMS = ('財務トランザクション','財務データ') --言い換え表現を登録することでAIの解釈精度を高める
             COMMENT = '部門横断のすべての財務トランザクション',
 
         ACCOUNTS AS ACCOUNT_DIM PRIMARY KEY (ACCOUNT_KEY)
@@ -32,13 +45,16 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
             COMMENT = '売上分析用の顧客ディメンション'
     )
     RELATIONSHIPS (
+    --TRANSACTIONS（ファクト）と各ディメンションテーブルとの リレーション（JOIN 関係）を宣言しています。
         TRANSACTIONS_TO_ACCOUNTS      AS TRANSACTIONS(ACCOUNT_KEY)    REFERENCES ACCOUNTS(ACCOUNT_KEY),
         TRANSACTIONS_TO_DEPARTMENTS   AS TRANSACTIONS(DEPARTMENT_KEY) REFERENCES DEPARTMENTS(DEPARTMENT_KEY),
         TRANSACTIONS_TO_VENDORS       AS TRANSACTIONS(VENDOR_KEY)     REFERENCES VENDORS(VENDOR_KEY),
-        TRANSACTIONS_TO_PRODUCTS      AS TRANSACTIONS(PRODUCT_KEY)    REFERENCES PRODUCTS(PRODUCT_KEY),
+        -- TRANSACTIONS_TO_PRODUCTS      AS TRANSACTIONS(PRODUCT_KEY)    REFERENCES PRODUCTS(PRODUCT_KEY), --コメントアウト
         TRANSACTIONS_TO_CUSTOMERS     AS TRANSACTIONS(CUSTOMER_KEY)   REFERENCES CUSTOMERS(CUSTOMER_KEY)
     )
     FACTS (
+    -- 実際のトランザクションから発生するファクトの値
+    -- 後の METRICS で SUM(amount) や COUNT(transaction_record) を定義するための素地です。
         TRANSACTIONS.TRANSACTION_AMOUNT AS amount
             COMMENT = '取引金額（ドル）',
 
@@ -46,11 +62,12 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
             COMMENT = 'トランザクション件数'
     )
     DIMENSIONS (
+    -- 分析の軸（ディメンション）を定義します。SQLのWhere句に該当する箇所と考えると分かりやすい。
         TRANSACTIONS.TRANSACTION_DATE AS date
             WITH SYNONYMS = ('日付','取引日')
             COMMENT = '財務トランザクションの日付',
 
-        TRANSACTIONS.TRANSACTION_MONTH AS MONTH(date)
+        TRANSACTIONS.TRANSACTION_MONTH AS MONTH(date) --このように、同じ元カラムから派生するサマリー軸を定義できることもポイント。
             COMMENT = '取引月',
 
         TRANSACTIONS.TRANSACTION_YEAR AS YEAR(date)
@@ -96,20 +113,21 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
             WITH SYNONYMS = ('承認日','承認された日付')
             COMMENT = 'トランザクションが承認された日付',
 
-        TRANSACTIONS.PURCHASE_ORDER_NUMBER AS purchase_order_number
-            WITH SYNONYMS = ('発注番号','PO','購買発注書')
-            COMMENT = 'トラッキング用の購買発注番号',
+        -- TRANSACTIONS.PURCHASE_ORDER_NUMBER AS purchase_order_number　--コメントアウト
+        --     WITH SYNONYMS = ('発注番号','PO','購買発注書')
+        --     COMMENT = 'トラッキング用の購買発注番号',
 
         TRANSACTIONS.CONTRACT_REFERENCE AS contract_reference
             WITH SYNONYMS = ('契約','契約番号','契約参照')
             COMMENT = '関連する契約の参照'
     )
     METRICS (
+    -- 集計指標（KPI）を定義しています。
         TRANSACTIONS.AVERAGE_AMOUNT AS AVG(transactions.amount)
             COMMENT = '平均取引金額',
 
-        TRANSACTIONS.TOTAL_AMOUNT AS SUM(transactions.amount)
-            COMMENT = '取引金額合計',
+        -- TRANSACTIONS.TOTAL_AMOUNT AS SUM(transactions.amount)　--コメントアウト
+        --     COMMENT = '取引金額合計',
 
         TRANSACTIONS.TOTAL_TRANSACTIONS AS COUNT(transactions.transaction_record)
             COMMENT = 'トランザクション件数合計'
@@ -445,9 +463,9 @@ CREATE OR REPLACE SEMANTIC VIEW MARKETING_SEMANTIC_VIEW
 
     PUBLIC PRODUCTS.PRODUCT_KEY AS PRODUCT_KEY,
 
-    PUBLIC PRODUCTS.PRODUCT_NAME AS PRODUCT_NAME
-        WITH SYNONYMS = ('製品','商品','製品タイトル')
-        COMMENT = 'プロモーション対象製品名',
+    -- PUBLIC PRODUCTS.PRODUCT_NAME AS PRODUCT_NAME
+    --     WITH SYNONYMS = ('製品','商品','製品タイトル')
+    --     COMMENT = 'プロモーション対象製品名',
 
     PUBLIC PRODUCTS.PRODUCT_VERTICAL AS VERTICAL
         WITH SYNONYMS = ('バーティカル','業界')
@@ -486,8 +504,8 @@ CREATE OR REPLACE SEMANTIC VIEW MARKETING_SEMANTIC_VIEW
              THEN OPPORTUNITIES.revenue ELSE 0 END)
         COMMENT = 'Closed Won 案件からの売上金額',
 
-    PUBLIC OPPORTUNITIES.TOTAL_OPPORTUNITIES AS COUNT(OPPORTUNITIES.opportunity_record)
-        COMMENT = 'マーケティング起点の案件数合計',
+    -- PUBLIC OPPORTUNITIES.TOTAL_OPPORTUNITIES AS COUNT(OPPORTUNITIES.opportunity_record)
+    --     COMMENT = 'マーケティング起点の案件数合計',
 
     PUBLIC OPPORTUNITIES.TOTAL_REVENUE AS SUM(OPPORTUNITIES.revenue)
         COMMENT = 'マーケティング起点案件からの売上合計'
@@ -496,3 +514,29 @@ CREATE OR REPLACE SEMANTIC VIEW MARKETING_SEMANTIC_VIEW
 
 -- 動作確認
 SHOW SEMANTIC VIEWS;
+
+-- 不足部分をGUIからのセマンティックビューで編集してみよう
+
+--　作成したセマンティックビューに対してSQLでクエリしてみよう。
+
+-- マーケティングチャネル（ディメンション）ごとに、リード数、コンタクト数、売り上げなどの指標（メトリクス）を集計するクエリ
+SELECT
+  CHANNEL_NAME,          -- チャネル名（DIMENSION）
+  TOTAL_SPEND,           -- マーケティング費用合計
+  TOTAL_LEADS,           -- リード獲得数合計
+  TOTAL_CONTACTS,        -- 生成コンタクト数合計
+  TOTAL_REVENUE          -- マーケ起点案件からの売上合計
+FROM SEMANTIC_VIEW(
+  SV_VHOL_DB.VHOL_SCHEMA.MARKETING_SEMANTIC_VIEW
+  DIMENSIONS
+    CHANNELS.CHANNEL_NAME --Dimensionsで切り口を指定
+  METRICS --metricsで集計したい指標を集計
+    CAMPAIGNS.TOTAL_SPEND,
+    CAMPAIGNS.TOTAL_LEADS,
+    CONTACTS.TOTAL_CONTACTS,
+    OPPORTUNITIES.TOTAL_REVENUE
+)
+ORDER BY TOTAL_SPEND DESC;
+
+-- 作成したセマンティックビューに対して、PlayGroundから動作確認してみよう
+-- 2025年に最も多くの売上を生み出したマーケティングキャンペーン名はどれですか？チャネル別にマーケティングROIとリード単価を表示してください。
