@@ -113,7 +113,7 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
             WITH SYNONYMS = ('承認日','承認された日付')
             COMMENT = 'トランザクションが承認された日付',
 
-        TRANSACTIONS.PURCHASE_ORDER_NUMBER AS purchase_order_number --コメントアウト
+        TRANSACTIONS.PURCHASE_ORDER_NUMBER AS purchase_order_number
             WITH SYNONYMS = ('発注番号','PO','購買発注書')
            COMMENT = 'トラッキング用の購買発注番号',
 
@@ -126,7 +126,7 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
         TRANSACTIONS.AVERAGE_AMOUNT AS AVG(transactions.amount)
             COMMENT = '平均取引金額',
 
-         TRANSACTIONS.TOTAL_AMOUNT AS SUM(transactions.amount) --コメントアウト
+         TRANSACTIONS.TOTAL_AMOUNT AS SUM(transactions.amount)
           COMMENT = '取引金額合計',
 
         TRANSACTIONS.TOTAL_TRANSACTIONS AS COUNT(transactions.transaction_record)
