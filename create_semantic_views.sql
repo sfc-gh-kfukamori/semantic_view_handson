@@ -49,7 +49,7 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
         TRANSACTIONS_TO_ACCOUNTS      AS TRANSACTIONS(ACCOUNT_KEY)    REFERENCES ACCOUNTS(ACCOUNT_KEY),
         TRANSACTIONS_TO_DEPARTMENTS   AS TRANSACTIONS(DEPARTMENT_KEY) REFERENCES DEPARTMENTS(DEPARTMENT_KEY),
         TRANSACTIONS_TO_VENDORS       AS TRANSACTIONS(VENDOR_KEY)     REFERENCES VENDORS(VENDOR_KEY),
-        -- TRANSACTIONS_TO_PRODUCTS      AS TRANSACTIONS(PRODUCT_KEY)    REFERENCES PRODUCTS(PRODUCT_KEY), --コメントアウト
+        TRANSACTIONS_TO_PRODUCTS      AS TRANSACTIONS(PRODUCT_KEY)    REFERENCES PRODUCTS(PRODUCT_KEY), --コメントアウト
         TRANSACTIONS_TO_CUSTOMERS     AS TRANSACTIONS(CUSTOMER_KEY)   REFERENCES CUSTOMERS(CUSTOMER_KEY)
     )
     FACTS (
@@ -113,9 +113,9 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
             WITH SYNONYMS = ('承認日','承認された日付')
             COMMENT = 'トランザクションが承認された日付',
 
-        -- TRANSACTIONS.PURCHASE_ORDER_NUMBER AS purchase_order_number　--コメントアウト
-        --     WITH SYNONYMS = ('発注番号','PO','購買発注書')
-        --     COMMENT = 'トラッキング用の購買発注番号',
+        TRANSACTIONS.PURCHASE_ORDER_NUMBER AS purchase_order_number --コメントアウト
+            WITH SYNONYMS = ('発注番号','PO','購買発注書')
+           COMMENT = 'トラッキング用の購買発注番号',
 
         TRANSACTIONS.CONTRACT_REFERENCE AS contract_reference
             WITH SYNONYMS = ('契約','契約番号','契約参照')
@@ -126,8 +126,8 @@ CREATE OR REPLACE SEMANTIC VIEW FINANCE_SEMANTIC_VIEW
         TRANSACTIONS.AVERAGE_AMOUNT AS AVG(transactions.amount)
             COMMENT = '平均取引金額',
 
-        -- TRANSACTIONS.TOTAL_AMOUNT AS SUM(transactions.amount)　--コメントアウト
-        --     COMMENT = '取引金額合計',
+         TRANSACTIONS.TOTAL_AMOUNT AS SUM(transactions.amount) --コメントアウト
+          COMMENT = '取引金額合計',
 
         TRANSACTIONS.TOTAL_TRANSACTIONS AS COUNT(transactions.transaction_record)
             COMMENT = 'トランザクション件数合計'
