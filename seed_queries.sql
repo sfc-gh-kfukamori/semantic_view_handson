@@ -4,6 +4,7 @@ USE DATABASE SV_VHOL_DB;
 USE SCHEMA VHOL_SCHEMA;
 
 
+//Seed Queriesを実行
 
 SELECT /* vhol_seed_query */
     d.DEPARTMENT_NAME,
